@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ticket Sorter Demo</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 p-8">
+<div class="max-w-xl mx-auto bg-white rounded-lg shadow p-6">
+  <h1 class="text-2xl font-bold mb-4">Ticket Sorter Test</h1>
+  <form id="ticket-form" class="space-y-4">
+    <input id="ticket_id" placeholder="Ticket ID" value="T-001"
+      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+    <select id="channel" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+      <option value="app">app</option>
+      <option value="sms">sms</option>
+      <option value="call_center">call_center</option>
+      <option value="merchant_portal">merchant_portal</option>
+    </select>
+    <select id="locale" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
+      <option value="en">en</option>
+      <option value="bn">bn</option>
+      <option value="mixed">mixed</option>
+    </select>
+    <textarea id="message" rows="3" placeholder="Customer message"
+      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"></textarea>
+    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5">
+      Classify
+    </button>
+  </form>
+  <pre id="result" class="mt-6 bg-gray-900 text-green-400 text-xs p-4 rounded-lg overflow-auto"></pre>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+<script>
+document.getElementById('ticket-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const body = {
+    ticket_id: document.getElementById('ticket_id').value,
+    channel: document.getElementById('channel').value,
+    locale: document.getElementById('locale').value,
+    message: document.getElementById('message').value,
+  };
+  const res = await fetch('/sort-ticket', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+});
+</script>
+</body>
+</html>

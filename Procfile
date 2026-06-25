@@ -1,0 +1,1 @@
+web: gunicorn ticketsort.wsgi --log-file -
