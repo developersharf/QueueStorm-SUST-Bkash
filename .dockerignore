@@ -1,0 +1,38 @@
+# Local dev + secrets — never bake into the image.
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Local data + uploaded media.
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Secrets / env / editor state.
+.env
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# VCS + CI noise.
+.git/
+.gitignore
+.github/
+
+# Tooling wrappers.
+.puku/
+.puku-*/
+
+# README is kept inside the image (handy for inspecting the build context).

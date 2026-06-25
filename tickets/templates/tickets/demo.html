@@ -2,53 +2,302 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Ticket Sorter Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ticket Sorter — Demo</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-50 p-8">
-<div class="max-w-xl mx-auto bg-white rounded-lg shadow p-6">
-  <h1 class="text-2xl font-bold mb-4">Ticket Sorter Test</h1>
-  <form id="ticket-form" class="space-y-4">
-    <input id="ticket_id" placeholder="Ticket ID" value="T-001"
-      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
-    <select id="channel" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
-      <option value="app">app</option>
-      <option value="sms">sms</option>
-      <option value="call_center">call_center</option>
-      <option value="merchant_portal">merchant_portal</option>
-    </select>
-    <select id="locale" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5">
-      <option value="en">en</option>
-      <option value="bn">bn</option>
-      <option value="mixed">mixed</option>
-    </select>
-    <textarea id="message" rows="3" placeholder="Customer message"
-      class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full p-2.5"></textarea>
-    <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5">
-      Classify
-    </button>
-  </form>
-  <pre id="result" class="mt-6 bg-gray-900 text-green-400 text-xs p-4 rounded-lg overflow-auto"></pre>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script>
-document.getElementById('ticket-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const body = {
-    ticket_id: document.getElementById('ticket_id').value,
-    channel: document.getElementById('channel').value,
-    locale: document.getElementById('locale').value,
-    message: document.getElementById('message').value,
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          canvas: "#F9F9F7",
+          surface: "#FFFFFF",
+          ink: { DEFAULT: "#171717", muted: "#525252", subtle: "#737373" },
+          line: "#E5E5E5",
+          lineStrong: "#D4D4D4",
+          accent: { DEFAULT: "#171717", hover: "#262626" },
+        },
+        fontFamily: {
+          display: ["Inter Tight", "Inter", "system-ui", "sans-serif"],
+          sans: ["Inter", "system-ui", "sans-serif"],
+          mono: ["JetBrains Mono", "IBM Plex Mono", "ui-monospace", "monospace"],
+        },
+        fontSize: { "2xs": ["0.6875rem", { lineHeight: "1rem", letterSpacing: "0.02em" }] },
+        letterSpacing: { tightest: "-0.035em" },
+        borderRadius: { card: "14px" },
+        boxShadow: { card: "0 1px 0 0 rgba(23,23,23,0.02), 0 1px 2px 0 rgba(23,23,23,0.04)" },
+      },
+    },
   };
-  const res = await fetch('/sort-ticket', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(body),
-  });
-  const data = await res.json();
-  document.getElementById('result').textContent = JSON.stringify(data, null, 2);
-});
 </script>
+<style>
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+  body { font-feature-settings: "cv11", "ss01", "ss03"; }
+  .field-input { transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease; }
+  .field-input:hover { border-color: #D4D4D4; }
+  .field-input:focus { outline: none; border-color: #171717; box-shadow: 0 0 0 3px rgba(23,23,23,0.06); background-color: #FFFFFF; }
+  .btn-primary { transition: background-color 120ms ease, transform 120ms ease; }
+  .btn-primary:hover { background-color: #262626; }
+  .btn-primary:active { transform: translateY(0.5px); }
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2712%27 height=%2712%27 viewBox=%270 0 12 12%27%3E%3Cpath fill=%27none%27 stroke=%27%23525252%27 stroke-width=%271.5%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 d=%27M3 4.5l3 3 3-3%27/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 12px 12px;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .result-pre::-webkit-scrollbar { height: 8px; width: 8px; }
+  .result-pre::-webkit-scrollbar-thumb { background: #404040; border-radius: 999px; }
+  .result-pre::-webkit-scrollbar-track { background: transparent; }
+  .pulse-dot { animation: pulse 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+</style>
+</head>
+<body class="bg-canvas text-ink font-sans min-h-screen">
+  <div class="min-h-screen flex flex-col">
+    <header class="border-b border-line bg-canvas/80 backdrop-blur-sm sticky top-0 z-10">
+      <div class="mx-auto w-full max-w-6xl px-6 lg:px-10 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-10">
+          <a href="#" class="flex items-center gap-2.5 group">
+            <span class="inline-flex h-7 w-7 items-center justify-center rounded-md bg-ink text-canvas font-display font-bold text-[13px] tracking-tight">QS</span>
+            <span class="font-display font-semibold text-[15px] tracking-tightest text-ink">QueueStorm</span>
+          </a>
+          <nav class="hidden md:flex items-center gap-7 text-[13.5px] text-ink-muted">
+            <a href="#" class="text-ink font-medium">Triage</a>
+            <a href="#" class="hover:text-ink transition-colors">Tickets</a>
+            <a href="#" class="hover:text-ink transition-colors">Departments</a>
+            <a href="#" class="hover:text-ink transition-colors">Settings</a>
+          </nav>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="hidden sm:inline-flex items-center gap-2 font-mono text-2xs uppercase tracking-wider text-ink-subtle">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 pulse-dot"></span>
+            service online
+          </span>
+          <span class="font-mono text-2xs text-ink-subtle hidden md:inline">v1.0.0</span>
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-ink text-canvas font-display font-semibold text-[12px]">SB</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 mx-auto w-full max-w-6xl px-6 lg:px-10 py-10 lg:py-14">
+      <div class="mb-10">
+        <div class="flex items-center gap-2 font-mono text-2xs uppercase tracking-wider text-ink-subtle mb-4">
+          <span>Workspace</span>
+          <span class="text-lineStrong">/</span>
+          <span>Triage</span>
+          <span class="text-lineStrong">/</span>
+          <span class="text-ink-muted">Demo</span>
+        </div>
+        <div class="flex items-end justify-between gap-6 flex-wrap">
+          <div>
+            <h1 class="font-display font-semibold text-[34px] lg:text-[40px] leading-[1.05] tracking-tightest text-ink">
+              Classify a support ticket
+            </h1>
+            <p class="mt-3 text-[15px] leading-relaxed text-ink-muted max-w-xl">
+              Paste a customer message. The triage service returns a structured classification — case type, severity, department, and a one-sentence summary for the human agent.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 font-mono text-2xs uppercase tracking-wider px-2.5 py-1 rounded-full border border-line text-ink-muted bg-surface">
+              <span class="h-1.5 w-1.5 rounded-full bg-ink"></span>
+              rule based
+            </span>
+            <span class="inline-flex items-center gap-1.5 font-mono text-2xs uppercase tracking-wider px-2.5 py-1 rounded-full border border-line text-ink-muted bg-surface">
+              no llm
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        <section class="lg:col-span-7">
+          <div class="bg-surface rounded-card border border-line shadow-card overflow-hidden">
+            <div class="px-7 pt-6 pb-5 border-b border-line flex items-center justify-between">
+              <div>
+                <h2 class="font-display font-semibold text-[17px] tracking-tightest text-ink">New ticket</h2>
+                <p class="text-[13px] text-ink-muted mt-0.5">One message at a time. Empty messages are rejected.</p>
+              </div>
+              <span class="font-mono text-2xs uppercase tracking-wider text-ink-subtle">form</span>
+            </div>
+
+            <form id="ticket-form" class="px-7 py-6 space-y-5">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div class="md:col-span-2">
+                  <label for="ticket_id" class="block text-[13px] font-medium text-ink mb-2">Ticket ID</label>
+                  <input id="ticket_id" type="text" placeholder="T-001" value="T-001" autocomplete="off"
+                    class="field-input font-mono text-[13.5px] w-full bg-surface border border-line rounded-lg px-3.5 py-2.5 text-ink placeholder:text-ink-subtle">
+                </div>
+
+                <div>
+                  <label for="channel" class="block text-[13px] font-medium text-ink mb-2">Channel</label>
+                  <select id="channel"
+                    class="field-input font-mono text-[13.5px] w-full bg-surface border border-line rounded-lg px-3.5 py-2.5 text-ink pr-10">
+                    <option value="app">app</option>
+                    <option value="sms">sms</option>
+                    <option value="call_center">call_center</option>
+                    <option value="merchant_portal">merchant_portal</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label for="locale" class="block text-[13px] font-medium text-ink mb-2">Locale</label>
+                  <select id="locale"
+                    class="field-input font-mono text-[13.5px] w-full bg-surface border border-line rounded-lg px-3.5 py-2.5 text-ink pr-10">
+                    <option value="en">en</option>
+                    <option value="bn">bn</option>
+                    <option value="mixed">mixed</option>
+                  </select>
+                </div>
+
+                <div class="md:col-span-2">
+                  <div class="flex items-center justify-between mb-2">
+                    <label for="message" class="block text-[13px] font-medium text-ink">Customer message</label>
+                    <span class="font-mono text-2xs uppercase tracking-wider text-ink-subtle">required</span>
+                  </div>
+                  <textarea id="message" rows="5" placeholder="I sent 5000 taka to a wrong number this morning, please help me get it back"
+                    class="field-input font-sans text-[14.5px] leading-relaxed w-full bg-surface border border-line rounded-lg px-3.5 py-3 text-ink placeholder:text-ink-subtle resize-y"></textarea>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between border-t border-line -mx-7 px-7 mt-6 pt-5">
+                <span class="font-mono text-2xs uppercase tracking-wider text-ink-subtle">POST /sort-ticket</span>
+                <button type="submit"
+                  class="btn-primary inline-flex items-center gap-2 bg-accent text-canvas text-[13.5px] font-medium px-4 py-2 rounded-lg">
+                  Classify
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+                    <path d="M3 7h8M7.5 3.5L11 7l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <aside class="lg:col-span-5 space-y-6">
+          <div class="bg-surface rounded-card border border-line shadow-card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-display font-semibold text-[15px] tracking-tightest text-ink">Response</h2>
+              <span id="result-status" class="font-mono text-2xs uppercase tracking-wider text-ink-subtle">idle</span>
+            </div>
+            <pre id="result" class="result-pre font-mono text-[12.5px] leading-relaxed bg-[#0F0F0E] text-[#E5E5E5] p-5 rounded-lg overflow-auto min-h-[180px] whitespace-pre-wrap">// submit the form to see the JSON response</pre>
+          </div>
+
+          <div class="bg-surface rounded-card border border-line shadow-card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-display font-semibold text-[15px] tracking-tightest text-ink">Try a sample</h2>
+              <span class="font-mono text-2xs uppercase tracking-wider text-ink-subtle">5 cases</span>
+            </div>
+            <ul class="space-y-1 -mx-2">
+              <li><button type="button" data-sample="I sent 3000 to wrong number" class="sample-btn w-full text-left px-3 py-2.5 rounded-md hover:bg-canvas transition-colors group">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[13.5px] text-ink">I sent 3000 to wrong number</span>
+                  <span class="font-mono text-2xs uppercase tracking-wider text-ink-subtle group-hover:text-ink">wrong</span>
+                </div>
+              </button></li>
+              <li><button type="button" data-sample="Payment failed but balance deducted" class="sample-btn w-full text-left px-3 py-2.5 rounded-md hover:bg-canvas transition-colors group">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[13.5px] text-ink">Payment failed but balance deducted</span>
+                  <span class="font-mono text-2xs uppercase tracking-wider text-ink-subtle group-hover:text-ink">payment</span>
+                </div>
+              </button></li>
+              <li><button type="button" data-sample="Someone called asking my OTP, is that bKash?" class="sample-btn w-full text-left px-3 py-2.5 rounded-md hover:bg-canvas transition-colors group">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[13.5px] text-ink">Someone called asking my OTP, is that bKash?</span>
+                  <span class="font-mono text-2xs uppercase tracking-wider text-rose-600/80">phishing</span>
+                </div>
+              </button></li>
+              <li><button type="button" data-sample="Please refund my last transaction, I changed my mind" class="sample-btn w-full text-left px-3 py-2.5 rounded-md hover:bg-canvas transition-colors group">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[13.5px] text-ink">Please refund my last transaction, I changed my mind</span>
+                  <span class="font-mono text-2xs uppercase tracking-wider text-ink-subtle group-hover:text-ink">refund</span>
+                </div>
+              </button></li>
+              <li><button type="button" data-sample="App crashed when I opened it" class="sample-btn w-full text-left px-3 py-2.5 rounded-md hover:bg-canvas transition-colors group">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-[13.5px] text-ink">App crashed when I opened it</span>
+                  <span class="font-mono text-2xs uppercase tracking-wider text-ink-subtle group-hover:text-ink">other</span>
+                </div>
+              </button></li>
+            </ul>
+          </div>
+
+          <div class="bg-surface rounded-card border border-line shadow-card p-6">
+            <h2 class="font-display font-semibold text-[15px] tracking-tightest text-ink mb-3">Classification</h2>
+            <dl class="text-[13px] divide-y divide-line">
+              <div class="flex items-center justify-between py-2.5">
+                <dt class="text-ink-muted">Case type</dt><dd class="font-mono text-ink">5 enums</dd>
+              </div>
+              <div class="flex items-center justify-between py-2.5">
+                <dt class="text-ink-muted">Severity</dt><dd class="font-mono text-ink">low · medium · high · critical</dd>
+              </div>
+              <div class="flex items-center justify-between py-2.5">
+                <dt class="text-ink-muted">Department</dt><dd class="font-mono text-ink">4 routes</dd>
+              </div>
+              <div class="flex items-center justify-between py-2.5">
+                <dt class="text-ink-muted">LLM</dt><dd class="font-mono text-ink">not used</dd>
+              </div>
+            </dl>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="border-t border-line mt-auto">
+      <div class="mx-auto w-full max-w-6xl px-6 lg:px-10 h-14 flex items-center justify-between">
+        <span class="font-mono text-2xs uppercase tracking-wider text-ink-subtle">QueueStorm · Mock Preliminary</span>
+        <span class="font-mono text-2xs uppercase tracking-wider text-ink-subtle">built with django + drf</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const form = document.getElementById("ticket-form");
+      const resultEl = document.getElementById("result");
+      const statusEl = document.getElementById("result-status");
+      const sampleButtons = document.querySelectorAll(".sample-btn");
+
+      sampleButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const sample = btn.getAttribute("data-sample") || "";
+          const messageEl = document.getElementById("message");
+          messageEl.value = sample;
+          messageEl.focus();
+          const len = messageEl.value.length;
+          messageEl.setSelectionRange(len, len);
+        });
+      });
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const body = {
+          ticket_id: document.getElementById("ticket_id").value,
+          channel: document.getElementById("channel").value,
+          locale: document.getElementById("locale").value,
+          message: document.getElementById("message").value,
+        };
+        statusEl.textContent = "loading…";
+        resultEl.textContent = "// sending request…";
+        try {
+          const res = await fetch("/sort-ticket", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          const data = await res.json();
+          resultEl.textContent = JSON.stringify(data, null, 2);
+          statusEl.textContent = res.ok ? "200 ok" : res.status + " error";
+        } catch (err) {
+          resultEl.textContent = "// network error: " + (err && err.message ? err.message : String(err));
+          statusEl.textContent = "network error";
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
